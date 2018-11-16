@@ -41,7 +41,7 @@ import           Broch.OpenID.Discovery (mkOpenIDConfiguration)
 import           Broch.OpenID.IdToken
 import           Broch.OpenID.Registration
 import           Broch.OpenID.UserInfo
-import qualified Broch.Server.BlazeUI as UI
+import qualified Broch.Server.CoinberryUI as UI
 import           Broch.Server.Config
 import           Broch.Server.Internal
 import           Broch.Token

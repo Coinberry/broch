@@ -41,6 +41,7 @@ Library
                     , Broch.URI
   Other-Modules:      Broch.Scim
                     , Broch.Server.BlazeUI
+                    , Broch.Server.CoinberryUI
   Build-Depends:      base >= 4.9 && < 5
                     , aeson >= 0.8.1.0
                     , errors >= 2
