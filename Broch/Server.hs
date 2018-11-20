@@ -75,20 +75,31 @@ passwordLoginHandler loginPage authenticate = httpMethod >>= \m -> case m of
     GET  -> do
         rid <- maybeQueryParam requestIdKey
         html (loginPage rid)
-    POST -> do
-        uid  <- postParam "username"
-        pwd  <- postParam "password"
-        rid  <- fmap TE.encodeUtf8 <$> maybePostParam requestIdKey
-        user <- liftIO $ authenticate uid pwd
-
-        case user of
-            Nothing -> redirect $ maybe "/login" (\r -> B.concat ["/login?_rid=", r]) rid
-            Just u  -> do
-                now <- liftIO getCurrentTime
-                sessionInsert userIdKey (B.pack $ show $ User u now)
-                maybe (return ()) (sessionInsert (TE.encodeUtf8 requestIdKey)) rid
-                redirect =<< getCachedLocation "/home"
+    POST -> passwordHandler "/login" authenticate
     _    -> methodNotAllowed
+
+-- | Standard handler for login POST.
+-- Will attempt to authenticate the user with the supplied username and password information.
+passwordHandler
+    :: ByteString
+    -- ^ A function which renders the login page
+    -> AuthenticateResourceOwner IO
+    -- ^ The function to process an authentication request
+    -> Handler ()
+passwordHandler loginPageUri authenticate = do
+      uid  <- postParam "username"
+      pwd  <- postParam "password"
+      rid  <- fmap TE.encodeUtf8 <$> maybePostParam requestIdKey
+      user <- liftIO $ authenticate uid pwd
+
+      case user of
+          Nothing -> redirect $ maybe loginPageUri (\r -> B.concat [loginPageUri, "?_rid=", r]) rid
+          Just u  -> do
+              now <- liftIO getCurrentTime
+              sessionInsert userIdKey (B.pack $ show $ User u now)
+              maybe (return ()) (sessionInsert (TE.encodeUtf8 requestIdKey)) rid
+              redirect =<< getCachedLocation "/home"
+
 
 -- | Returns the current user and whether they were authenticated during the current authorization request.
 -- In order to satisfy the "prompt=login" situation, the request is tagged with a random parameter which is also
