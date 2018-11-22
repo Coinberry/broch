@@ -1,1 +1,1 @@
-((import ./release.nix) {}).broch.env
+((import ./release.nix) {}).brochDev

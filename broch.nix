@@ -21,9 +21,9 @@ mkDerivation {
     unordered-containers uri-bytestring uuid wai wai-extra
   ];
   executableHaskellDepends = [
-    base bytestring cryptonite directory memory monad-logger
-    optparse-applicative postgresql-simple reroute resource-pool
-    sqlite-simple text wai-app-static wai-extra warp
+    base blaze-builder blaze-html bytestring cryptonite directory
+    memory monad-logger optparse-applicative postgresql-simple reroute
+    resource-pool sqlite-simple text time wai-app-static wai-extra warp
   ];
   testHaskellDepends = [
     aeson aeson-qq base blaze-builder bytestring containers cookie
