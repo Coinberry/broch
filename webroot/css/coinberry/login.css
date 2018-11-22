@@ -1,0 +1,57 @@
+main {
+    width: 100%;
+    padding: 1em;
+}
+
+header {
+    width: 100%;
+    text-align: center;
+    padding: 1em;
+}
+
+footer {
+    width: 100%;
+    text-align: center;
+    padding: 1em;
+}
+
+.disclaimer-box {
+    text-align: center;
+    padding: 1em;
+}
+
+.button-box {
+    text-align: center;
+    padding: 1em;
+}
+
+.disclaimer {
+    width: 360px;
+    font-family: Muli;
+    font-size: 15px;
+    font-weight: normal;
+    font-style: normal;
+    font-stretch: normal;
+    line-height: normal;
+    letter-spacing: normal;
+    text-align: center;
+    color: #212121;
+    display: inline-block;
+}
+
+.button {
+    width: 310px;
+    height: 48px;
+    border-radius: 24px;
+    background-color: #f22261;
+    display: inline-block;
+    white-space: normal;
+    vertical-align: middle;
+    border: 1px solid transparent;
+    cursor: pointer;
+
+    font-family: Muli;
+    font-size: 16px;
+    color: white;
+    text-align: center;
+}

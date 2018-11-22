@@ -95,6 +95,33 @@ Executable broch
 
   Ghc-Options:        -Wall -rtsopts -threaded
 
+Executable coinberry-oauth
+  Default-Language:   Haskell2010
+  Hs-Source-Dirs:     coinberry-oauth
+  Main-Is:            Main.hs
+  Other-Modules:      CoinberryUI
+  Build-Depends:      broch
+                    , base
+                    , bytestring
+                    , cryptonite
+                    , directory
+                    , memory
+                    , monad-logger >= 0.3
+                    , optparse-applicative
+                    , postgresql-simple
+                    , reroute
+                    , resource-pool
+                    , sqlite-simple
+                    , text
+                    , wai-app-static >= 3.1.4
+                    , wai-extra
+                    , warp >= 3
+                    , blaze-builder >= 0.3
+                    , blaze-html >= 0.7
+                    , time
+
+  Ghc-Options:        -Wall -rtsopts -threaded
+
 Test-suite tests
   Default-Language:   Haskell2010
   Type:               exitcode-stdio-1.0

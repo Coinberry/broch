@@ -7,3 +7,5 @@ pgdata/
 *.key
 *.crt
 tags
+jwks.json
+session_key.json
