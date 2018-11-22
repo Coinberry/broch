@@ -41,7 +41,7 @@ import           Broch.OpenID.Discovery (mkOpenIDConfiguration)
 import           Broch.OpenID.IdToken
 import           Broch.OpenID.Registration
 import           Broch.OpenID.UserInfo
-import qualified Broch.Server.CoinberryUI as UI
+import qualified Broch.Server.BlazeUI as UI
 import           Broch.Server.Config
 import           Broch.Server.Internal
 import           Broch.Token
@@ -93,7 +93,7 @@ passwordHandler loginPageUri authenticate = do
       user <- liftIO $ authenticate uid pwd
 
       case user of
-          Nothing -> redirect $ maybe loginPageUri (\r -> B.concat [loginPageUri, "?_rid=", r]) rid
+          Nothing -> redirectExternal $ maybe loginPageUri (\r -> B.concat [loginPageUri, "?_rid=", r]) rid
           Just u  -> do
               now <- liftIO getCurrentTime
               sessionInsert userIdKey (B.pack $ show $ User u now)
@@ -124,13 +124,16 @@ authenticatedSubject = do
     unpackUsr = read . T.unpack . TE.decodeUtf8
 
 authenticateSubject :: Handler ()
-authenticateSubject = do
+authenticateSubject = authenticateSubjectWithURI "/login?_rid="
+
+authenticateSubjectWithURI :: ByteString -> Handler ()
+authenticateSubjectWithURI loginURI = do
     bs <- getRandomBytes 8 :: Handler ByteString
     let tag = convertToBase Base64URLUnpadded bs
     location <- request >>= \r -> return $ B.concat [W.rawPathInfo r, W.rawQueryString r, "&", tag, "="]
     cacheLocationUrl location
     sessionDelete userIdKey
-    redirect $ B.concat ["/login?_rid=", tag]
+    redirectExternal $ B.concat [loginURI, "?_rid=", tag]
 
 -- | Creates the server routing table from a configuration.
 --

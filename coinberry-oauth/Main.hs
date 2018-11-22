@@ -23,6 +23,7 @@ import qualified Web.Routing.SafeRouting as R
 
 import qualified Broch.PostgreSQL as BP
 import qualified Broch.SQLite as BS
+import qualified CoinberryUI as UI
 import Broch.Server
 import Broch.Server.Config
 import Broch.Server.Internal
@@ -32,6 +33,7 @@ data BackEnd = POSTGRES | SQLITE deriving (Read, Show)
 
 data BrochOpts = BrochOpts
     { issuer  :: T.Text
+    , externalLogin :: T.Text
     , port    :: Int
     , connStr :: String
     , webRoot :: FilePath
@@ -49,13 +51,18 @@ backEndOption = option auto
 textOption :: Mod OptionFields String -> Parser T.Text
 textOption x = T.pack <$> strOption x
 
-parser :: String -> String -> Int -> String -> Parser BrochOpts
-parser issuer db port webroot = BrochOpts
+parser :: String -> String -> String -> Int -> String -> Parser BrochOpts
+parser issuer externalLogin db port webroot = BrochOpts
     <$> textOption
         ( long "issuer"
        <> help "The OP's issuer URL"
        <> metavar "ISSUER"
        <> value issuer)
+    <*> textOption
+        ( long "external-login"
+       <> help "URI for external login page"
+       <> metavar "EXTERNAL_LOGIN"
+       <> value externalLogin)
     <*> option auto
         ( long "port"
        <> metavar "PORT"
@@ -77,12 +84,13 @@ main :: IO ()
 main = do
     env <- getEnvironment
     let issuer  = fromMaybe "http://localhost:3000" $ lookup "ISSUER" env
+        externalLogin = fromMaybe "http://localhost:3000/login" $ lookup "EXTERNAL_LOGIN" env
         port    = maybe 3000 read                   $ lookup "PORT" env
         db      = fromMaybe "default"               $ lookup "DATABASE" env
         webroot = fromMaybe "webroot"               $ lookup "WEBROOT" env
         desc    = fullDesc <> progDesc "Run an OpenID Connect server"
     sidSalt <- decodeSalt $ lookup "SUBJECT_ID_SALT" env
-    opts <- setConnStr <$> execParser (info (helper <*> parser issuer db port webroot) desc)
+    opts <- setConnStr <$> execParser (info (helper <*> parser issuer externalLogin db port webroot) desc)
     when (isNothing sidSalt) $ putStrLn "Subject identifiers will be shared between clients. Set SUBJECT_ID_SALT to use pairwise identifiers)"
     runWithOptions opts sidSalt
   where
@@ -117,11 +125,12 @@ runWithOptions BrochOpts {..} sidSalt = do
 
     config <- mkBackEnd <$> inMemoryConfig issuer kr sidSalt
     let app = staticApp (defaultWebAppSettings "webroot")
-        baseRouter = brochServer config defaultApprovalPage authenticatedSubject authenticateSubject
+        loginURI = "http://localhost:3000/login"
+        baseRouter = brochServer config UI.approvalPage authenticatedSubject (authenticateSubjectWithURI loginURI)
         authenticate username password = passwordAuthenticate validatePassword username (TE.encodeUtf8 password)
         extraRoutes =
             [ ("/home",   text "Hello, I'm the home page")
-            , ("/login",  passwordHandler "https://coinberry.com/users/sign_in" authenticate)
+            , ("/login",  passwordHandler loginURI authenticate)
             , ("/logout", invalidateSession >> text "You have been logged out")
             ]
         router = foldl (\pathMap (r, h) -> R.insertPathMap' (R.toInternalPath (R.static r)) (const h) pathMap) baseRouter extraRoutes

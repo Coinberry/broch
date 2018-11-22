@@ -41,7 +41,6 @@ Library
                     , Broch.URI
   Other-Modules:      Broch.Scim
                     , Broch.Server.BlazeUI
-                    , Broch.Server.CoinberryUI
   Build-Depends:      base >= 4.9 && < 5
                     , aeson >= 0.8.1.0
                     , errors >= 2
@@ -93,6 +92,33 @@ Executable broch
                     , wai-app-static >= 3.1.4
                     , wai-extra
                     , warp >= 3
+
+  Ghc-Options:        -Wall -rtsopts -threaded
+
+Executable coinberry-oauth
+  Default-Language:   Haskell2010
+  Hs-Source-Dirs:     coinberry-oauth
+  Main-Is:            Main.hs
+  Other-Modules:      CoinberryUI
+  Build-Depends:      broch
+                    , base
+                    , bytestring
+                    , cryptonite
+                    , directory
+                    , memory
+                    , monad-logger >= 0.3
+                    , optparse-applicative
+                    , postgresql-simple
+                    , reroute
+                    , resource-pool
+                    , sqlite-simple
+                    , text
+                    , wai-app-static >= 3.1.4
+                    , wai-extra
+                    , warp >= 3
+                    , blaze-builder >= 0.3
+                    , blaze-html >= 0.7
+                    , time
 
   Ghc-Options:        -Wall -rtsopts -threaded
 
