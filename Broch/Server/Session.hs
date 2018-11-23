@@ -9,6 +9,7 @@ module Broch.Server.Session
     , lookup
     , delete
     , insert
+    , getKey
     )
 where
 

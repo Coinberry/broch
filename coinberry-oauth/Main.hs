@@ -27,7 +27,7 @@ import qualified CoinberryUI as UI
 import Broch.Server
 import Broch.Server.Config
 import Broch.Server.Internal
-import Broch.Server.Session (defaultKey, defaultLoadSession)
+import Broch.Server.Session (defaultLoadSession, getKey)
 
 data BackEnd = POSTGRES | SQLITE deriving (Read, Show)
 
@@ -37,6 +37,7 @@ data BrochOpts = BrochOpts
     , port    :: Int
     , connStr :: String
     , webRoot :: FilePath
+    , keysPath :: FilePath
     , backEnd :: BackEnd
     }
 
@@ -51,8 +52,8 @@ backEndOption = option auto
 textOption :: Mod OptionFields String -> Parser T.Text
 textOption x = T.pack <$> strOption x
 
-parser :: String -> String -> String -> Int -> String -> Parser BrochOpts
-parser issuer externalLogin db port webroot = BrochOpts
+parser :: String -> String -> String -> Int -> String -> String -> Parser BrochOpts
+parser issuer externalLogin db port webroot keysPath = BrochOpts
     <$> textOption
         ( long "issuer"
        <> help "The OP's issuer URL"
@@ -78,6 +79,11 @@ parser issuer externalLogin db port webroot = BrochOpts
        <> help "The directory from which to serve static content"
        <> metavar "WEBROOT"
        <> value webroot)
+    <*> strOption
+        ( long "keys-path"
+       <> help "The directory used to store JWKS and session key."
+       <> metavar "KEYS_PATH"
+       <> value keysPath)
     <*> backEndOption
 
 main :: IO ()
@@ -88,9 +94,10 @@ main = do
         port    = maybe 3000 read                   $ lookup "PORT" env
         db      = fromMaybe "default"               $ lookup "DATABASE" env
         webroot = fromMaybe "webroot"               $ lookup "WEBROOT" env
+        keysPath = fromMaybe "."               $ lookup "KEYS_PATH" env
         desc    = fullDesc <> progDesc "Run an OpenID Connect server"
     sidSalt <- decodeSalt $ lookup "SUBJECT_ID_SALT" env
-    opts <- setConnStr <$> execParser (info (helper <*> parser issuer externalLogin db port webroot) desc)
+    opts <- setConnStr <$> execParser (info (helper <*> parser issuer externalLogin db port webroot keysPath) desc)
     when (isNothing sidSalt) $ putStrLn "Subject identifiers will be shared between clients. Set SUBJECT_ID_SALT to use pairwise identifiers)"
     runWithOptions opts sidSalt
   where
@@ -109,10 +116,16 @@ decodeSalt (Just s) = case bs of
   where
     bs = let b = BC.pack s in msum [BE.convertFromBase BE.Base64 b, BE.convertFromBase BE.Base16 b]
 
+keyRingParams :: FilePath -> KeyRingParams
+keyRingParams keysPath = KeyRingParams (keysPath <> "/jwks.json") 128 5 5
+
+keyFile :: FilePath -> FilePath
+keyFile keysPath = keysPath <> "/session_key.json"
+
 runWithOptions :: BrochOpts -> Maybe ByteString -> IO ()
 runWithOptions BrochOpts {..} sidSalt = do
-    sessionKey <- defaultKey
-    kr <- defaultKeyRing
+    sessionKey <- getKey $ keyFile keysPath
+    kr <- getKeyRing $ keyRingParams keysPath
     rotateKeys kr True
     (mkBackEnd, passwordAuthenticate) <- case backEnd of
         POSTGRES -> do
