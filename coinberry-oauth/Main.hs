@@ -33,7 +33,7 @@ data BackEnd = POSTGRES | SQLITE deriving (Read, Show)
 
 data BrochOpts = BrochOpts
     { issuer  :: T.Text
-    , externalLogin :: T.Text
+    , externalLogin :: String
     , port    :: Int
     , connStr :: String
     , webRoot :: FilePath
@@ -59,7 +59,7 @@ parser issuer externalLogin db port webroot keysPath = BrochOpts
        <> help "The OP's issuer URL"
        <> metavar "ISSUER"
        <> value issuer)
-    <*> textOption
+    <*> strOption
         ( long "external-login"
        <> help "URI for external login page"
        <> metavar "EXTERNAL_LOGIN"
@@ -138,7 +138,7 @@ runWithOptions BrochOpts {..} sidSalt = do
 
     config <- mkBackEnd <$> inMemoryConfig issuer kr sidSalt
     let app = staticApp (defaultWebAppSettings "webroot")
-        loginURI = "http://localhost:3000/login"
+        loginURI = BC.pack externalLogin
         baseRouter = brochServer config UI.approvalPage authenticatedSubject (authenticateSubjectWithURI loginURI)
         authenticate username password = passwordAuthenticate validatePassword username (TE.encodeUtf8 password)
         extraRoutes =
