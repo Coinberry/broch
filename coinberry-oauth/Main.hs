@@ -137,7 +137,7 @@ runWithOptions BrochOpts {..} sidSalt = do
             return (BS.sqliteBackend pool, \v u p -> withResource pool $ \c -> BS.passwordAuthenticate c v u p)
 
     config <- mkBackEnd <$> inMemoryConfig issuer kr sidSalt
-    let app = staticApp (defaultWebAppSettings "webroot")
+    let app = staticApp (defaultWebAppSettings webRoot)
         loginURI = BC.pack externalLogin
         baseRouter = brochServer config UI.approvalPage authenticatedSubject (authenticateSubjectWithURI loginURI)
         authenticate username password = passwordAuthenticate validatePassword username (TE.encodeUtf8 password)
