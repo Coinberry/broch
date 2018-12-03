@@ -1,6 +1,7 @@
 SET ROLE coinberry;
 
 CREATE USER oauth;
+GRANT oauth TO coinberry;
 GRANT CONNECT ON DATABASE :db TO oauth;
 CREATE SCHEMA AUTHORIZATION oauth;
 
